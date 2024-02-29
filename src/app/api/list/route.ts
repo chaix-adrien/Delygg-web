@@ -9,7 +9,7 @@ export async function GET() {
 
   return new NextResponse(
     JSON.stringify({
-      list: Object.values(result.torrents).map((t) =>
+      list: Object.values(result.torrents || {}).map((t) =>
         t.name.replace(/\.\w*$/m, "")
       ),
     }),
