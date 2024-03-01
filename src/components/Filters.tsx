@@ -80,7 +80,7 @@ export default function Filters(props: { filtersState: any }) {
                   )
                   .flat()
               ) : (
-                <p className="text-gray-400 italic">Add filter</p>
+                <p className="text-gray-400 italic">Add filters...</p>
               )}
             </div>
           }

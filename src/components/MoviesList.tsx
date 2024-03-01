@@ -1,6 +1,4 @@
-import { Input } from "@nextui-org/react";
 import { useEffect, useState } from "react";
-import useDebouncedState from "../hooks/useDebouncedState";
 import MovieCard from "./MovieCard";
 import useFiltersState from "@comp/hooks/useFiltersState";
 import Filters from "./Filters";
@@ -8,9 +6,11 @@ import MovieCardSkeleton from "./MovieCardSkeleton";
 import { MdSearchOff } from "react-icons/md";
 import ModalLoading from "./ModalLoading";
 import LocalApi from "@comp/apis/Local";
-import Deluge from "@comp/apis/Deluge";
-
-const DelugeApi = new Deluge();
+import { Select, SelectItem } from "@nextui-org/react";
+import { SortBy, SortOrder } from "./constants";
+import SearchBar from "./SearchBar";
+import { unstable_batchedUpdates } from "react-dom";
+import ModalActiveTorrent from "./ModalActiveTorrent";
 
 export interface Movie {
   name: string;
@@ -22,52 +22,86 @@ export interface Movie {
 export default function MovieList() {
   const filtersState = useFiltersState();
   const { apiFilters, customFilters, addFilters } = filtersState;
+  const [search, setSearch] = useState("");
   const [currentDl, setCurrentDl] = useState<boolean>(false);
   const [emptySearch, setEmptySearch] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
   const [yggUrl, setYggUrl] = useState("");
   const [results, setResults] = useState<Movie[]>([]);
-  const [search, debouncedSearch, setSearch] = useDebouncedState("");
   const [activeTorrentsList, setActiveTorrentsList] = useState([]);
+  const [sortBy, setSortBy] = useState({
+    sort: ["publish_date"],
+    order: ["desc"],
+  });
 
   const refreshList = () =>
     LocalApi.getTorrentsList().then(setActiveTorrentsList);
+
   useEffect(() => {
-    setIsLoading(true);
-    setEmptySearch(false);
+    unstable_batchedUpdates(() => {
+      setIsLoading(true);
+      setEmptySearch(false);
+    });
     refreshList();
-    LocalApi.search(debouncedSearch, apiFilters).then((searchResult: any) => {
+    LocalApi.search(search, apiFilters, sortBy).then((searchResult: any) => {
       const { results, baseUrl } = searchResult;
 
-      let resultsFiltered = results.filter((movie: Movie) =>
-        customFilters.every(
-          ([key, filterValues]) =>
-            !filterValues.length || filterValues.includes(movie[key])
-        )
-      );
-      if (!resultsFiltered.length) {
-        setEmptySearch(true);
-        resultsFiltered = results;
-      }
-      setResults(resultsFiltered);
-      setYggUrl(baseUrl);
-      setIsLoading(false);
+      unstable_batchedUpdates(() => {
+        let resultsFiltered = results.filter((movie: Movie) =>
+          customFilters.every(
+            ([key, filterValues]) =>
+              !filterValues.length || filterValues.includes(movie[key])
+          )
+        );
+        if (!resultsFiltered.length) {
+          setEmptySearch(true);
+          resultsFiltered = results;
+        }
+        setResults(resultsFiltered);
+        setYggUrl(baseUrl);
+        setIsLoading(false);
+      });
     });
-  }, [debouncedSearch, customFilters, apiFilters]);
+  }, [customFilters, apiFilters, sortBy, search]);
 
   return (
     <div className="flex flex-col gap-2 w-full justify-center">
-      <Input
-        isClearable
-        type="search"
-        value={search}
-        onValueChange={setSearch}
-        variant="bordered"
-        placeholder={`Rechercher un torrent${
-          yggUrl ? ` sur ${yggUrl}` : "..."
-        }`}
-        onClear={() => setSearch("")}
-      />
+      <div className="flex justify-between items-center gap-4 flex-wrap">
+        <SearchBar yggUrl={yggUrl} onChange={setSearch} />
+        <div className="flex items-center w-52 gap-4 flex-grow sm:flex-grow-0">
+          <Select
+            label="Sort by"
+            className="min-w-24 w-24 flex-grow"
+            size="sm"
+            selectedKeys={sortBy.sort}
+            onSelectionChange={(sort) =>
+              sort.size > 0 && setSortBy({ ...sortBy, sort: [...sort] })
+            }
+          >
+            {SortBy.map(({ label, value }) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </Select>
+          <Select
+            label="Sort by"
+            className="min-w-20 w-20"
+            size="sm"
+            selectedKeys={sortBy.order}
+            renderValue={(items) => items[0].rendered}
+            onSelectionChange={(order) =>
+              setSortBy({ ...sortBy, order: [...order] })
+            }
+          >
+            {SortOrder.map(({ label, value }) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+      </div>
       <Filters filtersState={filtersState} />
       {emptySearch && (
         <div className="w-full flex justify-center items-center gap-4 m-4">
@@ -96,6 +130,7 @@ export default function MovieList() {
             );
           })}
       <ModalLoading isOpen={currentDl} />
+      <ModalActiveTorrent activeTorrentsList={activeTorrentsList} />
     </div>
   );
 }

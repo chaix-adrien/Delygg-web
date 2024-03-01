@@ -13,9 +13,8 @@ const YggApi = new Ygg();
 export async function POST(request: NextRepType) {
   const {
     search,
-    sort = "size",
-    order = "desc",
-    page = "1",
+    sortBy = { sort: ["publish_date"], order: ["desc"] },
+    page = "0",
     filters,
   } = await request.json();
   const formatedFilters = [];
@@ -29,10 +28,11 @@ export async function POST(request: NextRepType) {
       )
     );
   });
+
   const url = encodeURI(
     `/engine/search?name=${search.name}&${formatedFilters.join(
       "&"
-    )}&do=search&order=${order}&sort=${sort}&page=${page}`
+    )}&do=search&order=${sortBy.order[0]}&sort=${sortBy.sort[0]}&page=${page}`
   );
   const results = await YggApi.extractTorrents(url);
 

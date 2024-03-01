@@ -1,3 +1,5 @@
+import { FcGenericSortingDesc, FcGenericSortingAsc } from "react-icons/fc";
+
 /** @enum { number } */
 export const Categories = Object.freeze({
   ALL: "all",
@@ -81,19 +83,19 @@ export const SubCategories = Object.freeze({
 /**
  * @enum { String }
  */
-export const SortBy = Object.freeze({
-  NAME: "name",
-  PUBLISH_DATE: "publish_date",
-  SIZE: "size",
-  COMPLETED: "completed",
-  SEED: "seed",
-  LEECH: "leech",
-});
+export const SortBy = [
+  { label: "NAME", value: "name" },
+  { label: "DATE", value: "publish_date" },
+  { label: "SIZE", value: "size" },
+  { label: "COMPLETED", value: "completed" },
+  { label: "SEED", value: "seed" },
+  { label: "LEECH", value: "leech" },
+];
 
 /**
  * @enum { String }
  */
-export const SortOrder = Object.freeze({
-  ASCENDING: "asc",
-  DESCENDING: "desc",
-});
+export const SortOrder = [
+  { label: <FcGenericSortingDesc />, value: "desc" },
+  { label: <FcGenericSortingAsc />, value: "asc" },
+];

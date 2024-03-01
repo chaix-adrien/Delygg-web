@@ -1,12 +1,17 @@
 import { Movie } from "@comp/components/MoviesList";
 
-function search(searchString: string, filters: any[]): Promise<Movie[]> {
+function search(
+  searchString: string,
+  filters: any[],
+  sortBy: { sort: string[]; order: string[] }
+): Promise<Movie[]> {
   return fetch("api/search", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       search: { name: searchString },
       filters,
+      sortBy,
     }),
   }).then((r) => r.json());
 }
