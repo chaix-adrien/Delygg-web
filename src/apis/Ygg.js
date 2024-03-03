@@ -35,7 +35,6 @@ function DOMparse(content) {
 
 export default class Ygg {
   constructor() {
-    this.logedIn = false;
     const jar = new CookieJar();
     this.Axios = wrapper(axios.create({ jar, withCredentials: true }));
     this.findBaseUrl();
@@ -55,7 +54,6 @@ export default class Ygg {
   }
 
   async login() {
-    if (this.logedIn) return;
     await this.findBaseUrl();
     const fdYgg = new FormData();
     fdYgg.append("id", YGG_USER);
@@ -68,7 +66,6 @@ export default class Ygg {
       data: fdYgg,
       headers: { "Content-Type": "multipart/form-data" },
     });
-    this.logedIn = true;
 
     return out;
   }

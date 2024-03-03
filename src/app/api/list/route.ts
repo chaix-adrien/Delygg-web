@@ -5,7 +5,7 @@ const DelugeApi = new Deluge();
 
 export async function GET() {
   await DelugeApi.login();
-  const { result } = await DelugeApi.getTorrentsList();
+  const result = await DelugeApi.getTorrentsList();
 
   return new NextResponse(
     JSON.stringify({

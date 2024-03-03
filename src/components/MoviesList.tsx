@@ -17,6 +17,14 @@ export interface Movie {
   link: string;
   size: string;
   date: string;
+  episode: string;
+  season: string;
+  language: string;
+  resolution: string;
+  source: string;
+  audio: string;
+  year: string;
+  title: string;
 }
 
 export default function MovieList() {

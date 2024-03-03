@@ -37,70 +37,71 @@ const torrentConfig = {
 export default class Deluge {
   constructor() {
     const jar = new CookieJar();
-    this.logedIn = false;
-    this.Axios = wrapper(axios.create({ jar, withCredentials: true }));
+    this.Axios = wrapper(
+      axios.create({
+        jar,
+        withCredentials: true,
+        headers: { "Content-Type": "application/json" },
+      })
+    );
+  }
+
+  async delugeMethod(method, params = []) {
+    const rep = await this.Axios.post(`${DELUGE_URL}/json`, {
+      method,
+      params,
+      id: 1,
+    }).then((r) => r.data);
+    console.log(`🦊 - delugeMethod - rep:`, rep);
+    if (rep.error)
+      throw `Error while calling ${DELUGE_URL}:${method} - ${JSON.stringify(
+        rep.error
+      )}`;
+
+    return rep.result;
+  }
+
+  async connectToHost() {
+    const hosts = await this.delugeMethod("web.get_hosts");
+    if (!hosts.length) throw "No Deluge host running.";
+    const [hostId, hostStatus] = await this.delugeMethod(
+      "web.get_host_status",
+      [hosts[0][0]]
+    );
+    if (hostStatus !== "Connected") {
+      const hostConnection = await this.delugeMethod("web.connect", [hostId]);
+      console.log(`🦊 - connectToHost - hostConnection:`, hostConnection);
+    }
   }
 
   async login() {
-    if (this.logedIn) return;
-
-    const rep = await this.Axios(`${DELUGE_URL}/json`, {
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-      data: JSON.stringify({
-        method: "auth.login",
-        params: [DELUGE_PASSWORD],
-        id: 1,
-      }),
-    });
+    const rep = await this.delugeMethod("auth.login", [DELUGE_PASSWORD]);
+    await this.connectToHost();
 
     if (!rep.data.result)
       throw "Invalid deluge configuration. Check the config.json file.";
-    this.logedIn = true;
   }
 
   getTorrentsList() {
-    return this.Axios(`${DELUGE_URL}/json`, {
-      headers: { "Content-Type": "application/json" },
-      data: JSON.stringify({
-        method: "web.update_ui",
-        params: [["name"], {}],
-        id: 2727,
-      }),
-      method: "POST",
-    }).then((r) => r.data);
+    return this.Axios("web.update_ui", [["name"], {}]);
   }
 
   async addTorrentFile(fileBlob) {
+    await this.login();
     const fdDeluge = new FormData();
     fdDeluge.append("file", fileBlob, Math.random() + ".torrent");
 
-    const uploadRep = await this.Axios(`${DELUGE_URL}/upload`, {
-      method: "POST",
-      headers: { "Content-Type": "multipart/form-data" },
-      data: fdDeluge,
-    });
-    console.log(`🦊 - addTorrentFile - uploadRep:`, uploadRep.data)
+    const uploadRep = await this.Axios.post(`${DELUGE_URL}/upload`, fdDeluge);
+    console.log(`🦊 - addTorrentFile - uploadRep:`, uploadRep.data);
 
-    const addRep = await this.Axios(`${DELUGE_URL}/json`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      data: JSON.stringify({
-        method: "web.add_torrents",
-        params: [
-          [
-            {
-              options: torrentConfig,
-              path: uploadRep.data.files[0],
-            },
-          ],
-        ],
-        id: 803,
-      }),
-    });
-    console.log(`🦊 - addTorrentFile - addRep:`, addRep.data)
-
-    if (addRep.data.error)
-      throw "deluge add torrent error: " + addRep.data.error;
+    const addRep = await this.Axios("web.add_torrents", [
+      [
+        {
+          options: torrentConfig,
+          path: uploadRep.data.files[0],
+        },
+      ],
+    ]);
+    console.log(`🦊 - addTorrentFile - addRep:`, addRep);
   }
 }

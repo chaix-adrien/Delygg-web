@@ -1,10 +1,10 @@
 import { Select, SelectItem, Tabs, Tab } from "@nextui-org/react";
-import { makeChip } from "./MovieCard";
 import { Categories, SubCategories } from "./constants";
 import { FiltersArray } from "@comp/hooks/useFiltersState";
 import { Accordion, AccordionItem } from "@nextui-org/react";
 import { BsPenFill } from "react-icons/bs";
 import { useState } from "react";
+import SmartChip from "./SmartChip";
 
 export default function Filters(props: { filtersState: any }) {
   const {
@@ -64,19 +64,16 @@ export default function Filters(props: { filtersState: any }) {
               {activeFilters.length ? (
                 activeFilters
                   .map(([key, values]) =>
-                    values.map((value: string) =>
-                      makeChip(
-                        key,
-                        value,
-                        false,
-                        true,
-                        () => {
+                    values.map((value: string) => (
+                      <SmartChip
+                        key={key}
+                        value={value}
+                        onClickFilter={() => {
                           removeFilters(key, value);
                           setSelectedKeys(new Set());
-                        },
-                        true
-                      )
-                    )
+                        }}
+                      />
+                    ))
                   )
                   .flat()
               ) : (
@@ -105,9 +102,9 @@ export default function Filters(props: { filtersState: any }) {
                 }
                 renderValue={(items) => (
                   <div className="flex flex-wrap gap-1">
-                    {items.map((item) =>
-                      makeChip(filter.key, item.key, true, true, () => null)
-                    )}
+                    {items.map((item) => (
+                      <SmartChip key={filter} value={item.key} />
+                    ))}
                   </div>
                 )}
               >

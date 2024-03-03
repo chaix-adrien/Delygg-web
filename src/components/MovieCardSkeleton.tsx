@@ -8,7 +8,7 @@ export default function MovieCardSkeleton() {
     <Card className="w-full">
       <CardHeader className="flex gap-3">
         <div className="flex justify-between w-full">
-          <Skeleton className="rounded w-1/3" />
+          <Skeleton className="rounded w-1/6 md:w-1/3" />
           <div className="flex justify-between gap-2">
             {generateArraySize(3).map((k) => (
               <Skeleton className="rounded" key={k}>
